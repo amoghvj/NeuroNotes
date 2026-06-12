@@ -1,12 +1,19 @@
-const { GROK_API_KEY, DEMO_MODE } = require('../config/env');
+const { GROK_API_KEY, DEMO_MODE, GROQ_MODEL } = require('../config/env');
 
 class LLMService {
     constructor() {
         this.apiKey = GROK_API_KEY;
-        // Using Groq API (groq.com) - Note: Different from xAI's Grok
+        // Using Groq API (groq.com)
         this.baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
-        this.modelName = 'llama-3.3-70b-versatile'; // Fast and capable Groq model
+        this.modelName = GROQ_MODEL || 'llama-3.1-8b-instant'; // Default to faster/cheaper model
         this.demoMode = DEMO_MODE;
+
+        if (this.apiKey) {
+            console.log(`[LLMService] Initialized with API Key: ${this.apiKey.substring(0, 10)}...`);
+            console.log(`[LLMService] Using Model: ${this.modelName}`);
+        } else {
+            console.warn('[LLMService] No API Key found. Running in DEMO MODE.');
+        }
     }
 
     /**
@@ -44,7 +51,8 @@ class LLMService {
 
             if (!response.ok) {
                 // If API fails, we suppress error and return empty to fall back to mock/demo responses upstream if handled
-                console.error(`Groq API Fail: ${response.status} ${response.statusText}`);
+                const errText = await response.text();
+                console.error(`Groq API Fail: ${response.status} ${response.statusText}`, errText);
                 return '';
             }
 
